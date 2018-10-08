@@ -3,6 +3,7 @@
 ###############################################################################
 * text=auto
 zlib/* linguist-vendored
+*.h linguist-language=cpp
 ###############################################################################
 # Set default behavior for command prompt diff.
 #
