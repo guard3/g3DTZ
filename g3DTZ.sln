@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2000
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "g3DTZ", "g3DTZ\g3DTZ.vcxproj", "{A8A104E0-5952-438F-818E-A924001228FF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A8A104E0-5952-438F-818E-A924001228FF}.Debug|x64.ActiveCfg = Debug|x64
+		{A8A104E0-5952-438F-818E-A924001228FF}.Debug|x64.Build.0 = Debug|x64
+		{A8A104E0-5952-438F-818E-A924001228FF}.Debug|x86.ActiveCfg = Release|Win32
+		{A8A104E0-5952-438F-818E-A924001228FF}.Debug|x86.Build.0 = Release|Win32
+		{A8A104E0-5952-438F-818E-A924001228FF}.Release|x64.ActiveCfg = Release|x64
+		{A8A104E0-5952-438F-818E-A924001228FF}.Release|x64.Build.0 = Release|x64
+		{A8A104E0-5952-438F-818E-A924001228FF}.Release|x86.ActiveCfg = Release|Win32
+		{A8A104E0-5952-438F-818E-A924001228FF}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0C401D3A-5E09-4AAF-A496-6517F384431F}
+	EndGlobalSection
+EndGlobal
