@@ -36,6 +36,7 @@ int wmain(int argc, const wchar** argv)
 	ExtractModelInfoAndStuff();
 	ExtractObjectData();
 	ExtractFightMoves();
+	ExtractPedType();
 	ExtractPedStats();
 	ExtractPedGroups();
 	ExtractWeaponInfo();

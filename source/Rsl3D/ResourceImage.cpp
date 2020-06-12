@@ -15,6 +15,7 @@
 #include "Streaming.h"
 #include "AnimManager.h"
 #include "Ped.h"
+#include "PedType.h"
 #include "PedStats.h"
 #include "WaterLevel.h"
 #include "HandlingMgr.h"
@@ -56,16 +57,16 @@ struct sResourceImage
 	RslTexList         *storedTexList;
 	CPool<ColDef>      *colPool;
 	bool                colOnlyBB;
-	int tempColModels;
+	void* tempColModels;
 	CObjectInfo        *objectInfo;
 	void               *vehicleModelInfoInst; // Static variables of CVehicleModelInfo; nullptr in VCS
 	CStreaming         *streamingInst;
 	CAnimManager       *animManagerInst;
-	tFightMove* fightMoves;
+	tFightMove         *fightMoves;
 #ifdef LCS
-	int pedAnimInfo;
+	void* pedAnimInfo;
 #endif
-	void** pedType;
+	CPedType** pedType;
 	CPedStats** pedStats;
 #ifdef VCS
 	RslRGB(*RGBTable)[128]; // The ped and car colour table in VCS
@@ -301,6 +302,7 @@ bool LoadResourceImage()
 
 	/* Initialize ped stuff */
 	CPed::LoadFightData(pResourceImage->fightMoves);
+	CPedType::Initialize(pResourceImage->pedType);
 	CPedStats::Load(pResourceImage->pedStats);
 
 	CSurfaceTable::Load(pResourceImage->adhesiveLimitTable);
@@ -325,7 +327,7 @@ bool LoadResourceImage()
 		return (uint32)ptr - (uint32)gResourceMem;
 	};
 
-	std::cout << std::hex << fileaddr(pResourceImage->fightMoves) << std::dec << std::endl;
+	std::cout << std::hex << fileaddr(pResourceImage->pedType) << std::dec << std::endl;
 
 	return true;
 }

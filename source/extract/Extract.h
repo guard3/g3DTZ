@@ -4,6 +4,7 @@
 bool ExtractModelInfoAndStuff();
 bool ExtractIPLs();
 bool ExtractObjectData();
+bool ExtractPedType();
 bool ExtractPedStats();
 bool ExtractAnimations();
 bool ExtractSurfaceTable();
