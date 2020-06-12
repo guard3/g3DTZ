@@ -12,3 +12,4 @@ bool ExtractPedGroups();
 bool ExtractWeaponInfo();
 bool ExtractDIRs();
 bool ExtractParticle();
+bool ExtractWaterLevel();

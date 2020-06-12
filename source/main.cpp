@@ -42,6 +42,7 @@ int wmain(int argc, const wchar** argv)
 	ExtractSurfaceTable();
 	ExtractDIRs();
 	ExtractParticle();
+	ExtractWaterLevel();
 #else
 	
 #endif

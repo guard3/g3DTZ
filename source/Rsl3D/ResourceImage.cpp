@@ -15,6 +15,7 @@
 #include "Streaming.h"
 #include "AnimManager.h"
 #include "PedStats.h"
+#include "WaterLevel.h"
 #include "HandlingMgr.h"
 #include "SurfaceTable.h"
 #include "TimeCycle.h"
@@ -72,8 +73,8 @@ struct sResourceImage
 	int32           numAttributeZones;
 	CAttributeZone *attributeZones;
 	int32           numOccludersOnMap; // always 0
-	void*           occluders;         // always nullptr
-	int waterLevelInst;
+	void           *occluders;         // always nullptr
+	CWaterLevel    *waterLevelInst;
 #ifdef LCS
 	CHandlingDataMgr* handlingManagerInst;
 #else
@@ -304,6 +305,7 @@ bool LoadResourceImage()
 	CCutsceneMgr::Initialize(pResourceImage->cutsceneDir);
 	CPopulation::LoadPedGroups(pResourceImage->pedGroups);
 	CParticleSystemMgr::Load(pResourceImage->particleSystemManager);
+	CWaterLevel::Load(pResourceImage->waterLevelInst);
 
 	pTimeCycle = pResourceImage->timecycle;
 	gpWeaponTables = pResourceImage->weaponTables;
@@ -321,7 +323,7 @@ bool LoadResourceImage()
 		return (uint32)ptr - (uint32)gResourceMem;
 	};
 
-	std::cout << std::hex << fileaddr(pResourceImage->streamingInst) << std::dec << std::endl;
+	std::cout << std::hex << fileaddr(pResourceImage->waterLevelInst) << std::dec << std::endl;
 
 	return true;
 }

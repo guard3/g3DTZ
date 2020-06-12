@@ -34,6 +34,7 @@ struct RslRGB
 
 struct RslMaterial;
 struct RslObject;
+struct RslElement;
 struct RslTexList;
 struct RslRaster;
 struct RslLLLink
