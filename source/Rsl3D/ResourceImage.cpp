@@ -14,6 +14,7 @@
 #include "CullZones.h"
 #include "Streaming.h"
 #include "AnimManager.h"
+#include "Ped.h"
 #include "PedStats.h"
 #include "WaterLevel.h"
 #include "HandlingMgr.h"
@@ -60,7 +61,7 @@ struct sResourceImage
 	void               *vehicleModelInfoInst; // Static variables of CVehicleModelInfo; nullptr in VCS
 	CStreaming         *streamingInst;
 	CAnimManager       *animManagerInst;
-	int fightMoves;
+	tFightMove* fightMoves;
 #ifdef LCS
 	int pedAnimInfo;
 #endif
@@ -298,7 +299,8 @@ bool LoadResourceImage()
 	/* Initialize animations */
 	CAnimManager::Load(pResourceImage->animManagerInst);
 
-	/* Initialize ped stats */
+	/* Initialize ped stuff */
+	CPed::LoadFightData(pResourceImage->fightMoves);
 	CPedStats::Load(pResourceImage->pedStats);
 
 	CSurfaceTable::Load(pResourceImage->adhesiveLimitTable);
@@ -323,7 +325,7 @@ bool LoadResourceImage()
 		return (uint32)ptr - (uint32)gResourceMem;
 	};
 
-	std::cout << std::hex << fileaddr(pResourceImage->waterLevelInst) << std::dec << std::endl;
+	std::cout << std::hex << fileaddr(pResourceImage->fightMoves) << std::dec << std::endl;
 
 	return true;
 }

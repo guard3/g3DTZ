@@ -8,6 +8,11 @@ bool ExtractPedStats();
 bool ExtractAnimations();
 bool ExtractSurfaceTable();
 bool ExtractTimeCycle();
+#ifdef LCS
+bool ExtractFightMoves();
+#else
+inline bool ExtractFightMoves() { return true; }
+#endif
 bool ExtractPedGroups();
 bool ExtractWeaponInfo();
 bool ExtractDIRs();
