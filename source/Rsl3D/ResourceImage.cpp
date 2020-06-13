@@ -28,6 +28,7 @@
 #include "CutsceneMgr.h"
 #include "Ferry.h"
 #include "Train.h"
+#include "Plane.h"
 #include "SampMan.h"
 
 /* The buffer were GAME.DAT is stored, freed automatically */
@@ -95,21 +96,6 @@ struct sResourceImage
 #endif
 	int _3dmarkerArray;
 	CDirectory *cutsceneDir;
-	/*
-#ifdef LCS
-	void* ferryInst;
-	CTrain* trainInst;
-	void* planeInst;
-#ifdef PSP
-	tSample *soundSamples;
-#endif
-#else
-	void* unknown3;
-	//void* unknown4;
-	CTrain* trainInst;
-	void* unknown5;
-	tSample *soundSamples;
-#endif*/
 #ifdef LCS
 	CFerry* ferryInst;
 	CTrain* trainInst;
@@ -117,7 +103,7 @@ struct sResourceImage
 	uint32 unknown3;
 	uint32 unknown4;
 #endif
-	void* planeInst;
+	CPlane* planeInst;
 #if defined VCS || defined PSP
 	tSample* soundSamples;
 #endif
@@ -327,6 +313,8 @@ bool LoadResourceImage()
 	CPopulation::LoadPedGroups(pResourceImage->pedGroups);
 	CParticleSystemMgr::Load(pResourceImage->particleSystemManager);
 	CWaterLevel::Load(pResourceImage->waterLevelInst);
+	CPlane::Init(pResourceImage->planeInst);
+
 
 	gpTheZones = pResourceImage->theZones;
 	pTimeCycle = pResourceImage->timecycle;
@@ -347,7 +335,7 @@ bool LoadResourceImage()
 		return (uint32)ptr - (uint32)gResourceMem;
 	};
 
-	std::cout << std::hex << fileaddr(pResourceImage->ferryInst) << std::dec << std::endl;
+	std::cout << std::hex << fileaddr(pResourceImage->planeInst) << std::dec << std::endl;
 
 	return true;
 }

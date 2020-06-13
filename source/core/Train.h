@@ -26,7 +26,7 @@ public:
 class CTrain final
 {
 private:
-	uint8 unk[0x70];
+	uint8 unk1[0x70];
 	CTrainTrack* m_pTrack;   // El Train
 	CTrainTrack* m_pTrack_S; // Subway
 	uint8 unk2[0x38];
