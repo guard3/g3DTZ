@@ -31,7 +31,7 @@ int wmain(int argc, const wchar** argv)
 		return ERROR_RESOURCEIMAGE;
 
 #if 1
-	//ExtractAnimations();
+	ExtractAnimations();
 	ExtractIPLs();
 	ExtractModelInfoAndStuff();
 	ExtractObjectData();
@@ -48,7 +48,7 @@ int wmain(int argc, const wchar** argv)
 	ExtractZones();
 	ExtractPathData();
 #else
-	
+	ExtractAnimations();
 #endif
 
 	return ERROR_OK;

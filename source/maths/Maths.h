@@ -45,13 +45,14 @@ class CQuaternion
 public:
 	float x, y, z, w;
 
-	inline CQuaternion& Invert()
+	CQuaternion& Invert()
 	{
 		x = -x;
 		y = -y;
 		z = -z;
 		return *this;
 	}
+	CQuaternion GetInverted() { return { -x, -y, -z, w }; }
 };
 
 class CVector
