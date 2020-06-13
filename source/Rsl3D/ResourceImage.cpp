@@ -4,7 +4,8 @@
 #include "RelocatableChunk.h"
 #include "Utils.h"
 #include "FileSystem.h"
-#include <iostream>
+#include <stdlib.h>
+//#include <iostream>
 
 #include "RslEngine.h"
 #include "Pools.h"
@@ -330,12 +331,13 @@ bool LoadResourceImage()
 	CSampleManager::LoadSamples(pResourceImage->soundSamples);
 #endif
 
+	/* A lambda that prints the file address of a pointer */
 	auto fileaddr = [](void* ptr)
 	{
 		return (uint32)ptr - (uint32)gResourceMem;
 	};
 
-	std::cout << std::hex << fileaddr(pResourceImage->planeInst) << std::dec << std::endl;
+	// std::cout << std::hex << fileaddr(pResourceImage->planeInst) << std::dec << std::endl;
 
 	return true;
 }
