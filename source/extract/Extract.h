@@ -20,3 +20,4 @@ bool ExtractDIRs();
 bool ExtractParticle();
 bool ExtractWaterLevel();
 bool ExtractZones();
+bool ExtractPathData();

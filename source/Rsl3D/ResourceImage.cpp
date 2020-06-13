@@ -26,6 +26,8 @@
 #include "ParticleMgr.h"
 #include "WeaponInfo.h"
 #include "CutsceneMgr.h"
+#include "Ferry.h"
+#include "Train.h"
 #include "SampMan.h"
 
 /* The buffer were GAME.DAT is stored, freed automatically */
@@ -93,19 +95,33 @@ struct sResourceImage
 #endif
 	int _3dmarkerArray;
 	CDirectory *cutsceneDir;
+	/*
 #ifdef LCS
-	int ferryInst;
-	int trainInst;
-	int planeInst;
+	void* ferryInst;
+	CTrain* trainInst;
+	void* planeInst;
 #ifdef PSP
 	tSample *soundSamples;
 #endif
 #else
 	void* unknown3;
-	void* unknown4;
+	//void* unknown4;
+	CTrain* trainInst;
 	void* unknown5;
 	tSample *soundSamples;
+#endif*/
+#ifdef LCS
+	CFerry* ferryInst;
+	CTrain* trainInst;
+#else
+	uint32 unknown3;
+	uint32 unknown4;
 #endif
+	void* planeInst;
+#if defined VCS || defined PSP
+	tSample* soundSamples;
+#endif
+
 	int menuCompressedTextures;
 #ifdef VCS
 	void* unknown7;
@@ -317,6 +333,8 @@ bool LoadResourceImage()
 	gpWeaponTables = pResourceImage->weaponTables;
 #ifdef LCS
 	CHandlingDataMgr::Load(pResourceImage->handlingManagerInst);
+	CFerry::Init(pResourceImage->ferryInst);
+	CTrain::Init(pResourceImage->trainInst);
 #else
 	gpColourTable = pResourceImage->RGBTable;
 #endif
@@ -329,7 +347,7 @@ bool LoadResourceImage()
 		return (uint32)ptr - (uint32)gResourceMem;
 	};
 
-	std::cout << std::hex << fileaddr(pResourceImage->pedType) << std::dec << std::endl;
+	std::cout << std::hex << fileaddr(pResourceImage->ferryInst) << std::dec << std::endl;
 
 	return true;
 }

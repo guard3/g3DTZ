@@ -30,7 +30,7 @@ int wmain(int argc, const wchar** argv)
 	if (!LoadResourceImage())
 		return ERROR_RESOURCEIMAGE;
 
-#if 1
+#if 0
 	//ExtractAnimations();
 	ExtractIPLs();
 	ExtractModelInfoAndStuff();
@@ -47,7 +47,7 @@ int wmain(int argc, const wchar** argv)
 	ExtractWaterLevel();
 	ExtractZones();
 #else
-	
+	ExtractPathData();
 #endif
 
 	return ERROR_OK;
