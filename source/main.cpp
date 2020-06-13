@@ -45,6 +45,7 @@ int wmain(int argc, const wchar** argv)
 	ExtractDIRs();
 	ExtractParticle();
 	ExtractWaterLevel();
+	ExtractZones();
 #else
 	
 #endif

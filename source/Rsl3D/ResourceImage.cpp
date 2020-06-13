@@ -9,6 +9,7 @@
 #include "RslEngine.h"
 #include "Pools.h"
 #include "ModelInfo.h"
+#include "Zones.h"
 #include "TexListStore.h"
 #include "ColStore.h"
 #include "CullZones.h"
@@ -47,7 +48,7 @@ struct sResourceImage
 	CBaseModelInfo    **modelInfoPtrs;
 	void* m_pCarArrays;
 	void* m_pTotalNumOfCarsOfRating;
-	void* m_pTheZones;
+	CTheZones          *theZones;
 	void* m_pSectors;
 	void* m_BigBuildingList;
 	uint32              num2deffects;
@@ -311,6 +312,7 @@ bool LoadResourceImage()
 	CParticleSystemMgr::Load(pResourceImage->particleSystemManager);
 	CWaterLevel::Load(pResourceImage->waterLevelInst);
 
+	gpTheZones = pResourceImage->theZones;
 	pTimeCycle = pResourceImage->timecycle;
 	gpWeaponTables = pResourceImage->weaponTables;
 #ifdef LCS
