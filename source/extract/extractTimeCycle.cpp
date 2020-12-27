@@ -92,7 +92,7 @@ bool ExtractTimeCycle()
 			/* Print line */
 			f	<< std::endl << static_cast<int>(pTimeCycle->m_nAmbientRed[j][i])
 				<< '\t'      << static_cast<int>(pTimeCycle->m_nAmbientGreen[j][i])
-				<< '\t'      << static_cast<int>(pTimeCycle->m_nAmbientBlue[j][j])
+				<< '\t'      << static_cast<int>(pTimeCycle->m_nAmbientBlue[j][i])
 				<< '\t'      << static_cast<int>(pTimeCycle->m_nAmbientRed_Obj[j][i])
 				<< '\t'      << static_cast<int>(pTimeCycle->m_nAmbientGreen_Obj[j][i])
 				<< '\t'      << static_cast<int>(pTimeCycle->m_nAmbientBlue_Obj[j][i])
