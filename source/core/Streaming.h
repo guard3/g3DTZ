@@ -20,26 +20,19 @@ public:
 class CStreamingInfo final
 {
 private:
-#ifdef LCS
+#if defined VCS && defined PS2
+	void* field_0; // Uninitialized
+#endif
 	CStreamingInfo* m_next;
 	CStreamingInfo* m_prev;
-	uint8           m_loadState;
+	uint8           m_status;
 	uint8           m_flags;
-	int16           m_nextID;
-#elif defined VCS && defined PS2
-	int32	field_0;	//uninitialized
-	int32	field_4;	//0
-	int32	field_8;	//0
-	int16	field_C;	//0
-	int16	field_E;	//uninitialized
-#else
-	char unk[12];
-#endif
-	int32 m_position;
-	int32 m_size;
+	int16           m_nextModelOnCd; // Uninitialized on VCS PS2
+	uint32          m_cdPosn;
+	uint32          m_cdSize;
 public:
-	auto GetPosition() { return m_position; }
-	auto GetSize()     { return m_size;     }
+	auto GetPosition() { return m_cdPosn; }
+	auto GetSize()     { return m_cdSize; }
 };
 
 /* CStreaming is a mess... */
