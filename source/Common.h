@@ -1,12 +1,14 @@
 #pragma once
+#include <cstdint>
+
 typedef wchar_t wchar;
 
-typedef __int8  int8;
-typedef __int16 int16;
-typedef __int32 int32;
-typedef unsigned __int8  uint8;
-typedef unsigned __int16 uint16;
-typedef unsigned __int32 uint32;
+typedef int8_t  int8;
+typedef int16_t int16;
+typedef int32_t int32;
+typedef uint8_t  uint8;
+typedef uint16_t uint16;
+typedef uint32_t uint32;
 
 typedef long long llong;
 typedef unsigned char      uchar;
@@ -14,6 +16,10 @@ typedef unsigned short     ushort;
 typedef unsigned int       uint;
 typedef unsigned long      ulong;
 typedef unsigned long long ullong;
+
+typedef uint8  bool8;
+typedef uint16 bool16;
+typedef uint32 bool32;
 
 #ifdef LCS
 #define GAME_NAME    "lcs"
@@ -33,3 +39,23 @@ typedef unsigned long long ullong;
 #define G3DTZ_NAME_W GAME_NAME_W "_" PLATFORM_NAME
 
 #define __property(func) __declspec(property(get=func))
+
+/* Configure the appropriate bool size for each platform: 8bit for PSP, 32bit for PS2 */
+namespace detail {
+#ifdef PS2
+	typedef bool32 boolean;
+#else
+	typedef bool8  boolean;
+#endif
+
+	template<typename T, bool = sizeof(T) == sizeof(boolean)>
+	struct platform_bool {
+		typedef T type;
+	};
+
+	template<typename T>
+	struct platform_bool<T, false> {
+		typedef boolean type;
+	};
+}
+typedef typename detail::platform_bool<bool>::type boolean;

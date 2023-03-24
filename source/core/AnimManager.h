@@ -85,16 +85,12 @@ struct CAnimBlendTree
 
 struct CAnimBlock
 {
-	char  name[20];
-	bool  isLoaded; // *
-#ifdef PSP          // *
-	int16 refCount; // * On PS2 this could be some 32-bit bool and a 16-bit refCount. But this setup here works too...
-#else               // *
-	int32 refCount; // *
-#endif
-	int32 firstIndex; // into the blend tree array; CAnimManager::m_aAnimations
-	int32 numAnims;
-	void* chunkData; // pointer to relocatable chunk, includes header
+	char    name[20];
+	boolean isLoaded;
+	int16   refCount;
+	int32   firstIndex; // into the blend tree array; CAnimManager::m_aAnimations
+	int32   numAnims;
+	void*   chunkData; // pointer to relocatable chunk, includes header
 #ifdef VCS
 	int32 unk0; // maybe ids to the extra structures
 	int32 unk1;
