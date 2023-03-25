@@ -72,20 +72,39 @@ private:
 	int32 field_1E36C;
 	int32 field_1E370;
 #else
-	int32 unk0;
-	int32 unk1;             // 0x74000
-	int32 m_texOffset;      // Offset in the streaming table where the textures are listed
-	int32 m_colOffset;      // Offset in the streaming table where the collisions are listed
-	int32 m_anmOffset;      // Offset in the streaming table where the animations are listed
-	int32 m_numStreamInfos; // Number of streaming infos in the streaming table;
-	int32 unk2;             // 0
-	int32 unk3;             // 0xC
-	uint8 unk4[0x50];
+	boolean m_disableStreaming;
+	int32 m_memoryUsed;        // 0x74000
+	int32 m_texOffset;         // Offset in the streaming table where the textures are listed
+	int32 m_colOffset;         // Offset in the streaming table where the collisions are listed
+	int32 m_anmOffset;         // Offset in the streaming table where the animations are listed
+	int32 m_numStreamInfos;    // Number of streaming infos in the streaming table;
+	int32 m_numVehiclesLoaded; // 0
+	int field_1C;              // 0xC
+	int32 m_vehiclesLoaded[20];
+	int32 m_lastVehicleDeleted;
+	int field_74;
+	int field_78;
+	int field_7C;
+	int field_80;
+	int field_84;
+	int field_88;
+	int field_8C;
+	int field_90;
 #ifdef PS2
-	uint8 unk5[0x58];
-#else
-	uint8 unk5[0x28];
+	int field_94;
+	int field_98;
+	int field_9C;
+	int field_A0;
+	int field_A4;
+	int field_A8;
+	int field_AC;
+	int field_B0;
+	int field_B4;
+	int field_B8;
+	int field_BC;
+	int field_C0;
 #endif
+	int cdimageFile; // file descriptor of .IMG file
 	CStreamingInfo* m_aStreamingInfos;
 #ifdef PS2
 	uint32 unk6[6];
