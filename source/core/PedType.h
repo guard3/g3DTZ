@@ -69,7 +69,7 @@ public:
 #else
 	/*
 	 * In VCS, this is the same case, but since we don't store any floats from PED.DAT,
-	 * the ped type flag is set to 0. If that's the case, we can "declate" the ped type invalid.
+	 * the ped type flag is set to 0. If that's the case, we can "declare" the ped type invalid.
 	 */
 	bool IsValid() { return m_nFlag != 0; }
 	auto GetWalkSpeed() { return "2.0"; }

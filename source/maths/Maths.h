@@ -63,7 +63,7 @@ public:
 	inline CVector operator-() const { return { -x, -y, -z }; }
 };
 
-struct CVuVector
+struct alignas(0x10) CVuVector
 {
 	float x, y, z, w;
 

@@ -59,3 +59,16 @@ namespace detail {
 	};
 }
 typedef typename detail::platform_bool<bool>::type boolean;
+
+#define _G3DTZ_STR2(value) #value
+#define _G3DTZ_STR(value) _G3DTZ_STR2(value)
+
+#if defined LCS && defined PSP
+#define assert_size(type, size, _, __, ___) static_assert(sizeof(type) == (size), "The size of " #type " is not " _G3DTZ_STR(size))
+#elif defined LCS && defined PS2
+#define assert_size(type, _, size, __, ___) static_assert(sizeof(type) == (size), "The size of " #type " is not " _G3DTZ_STR(size))
+#elif defined VCS && defined PSP
+#define assert_size(type, _, __, size, ___) static_assert(sizeof(type) == (size), "The size of " #type " is not " _G3DTZ_STR(size))
+#else
+#define assert_size(type, _, __, ___, size) static_assert(sizeof(type) == (size), "The size of " #type " is not " _G3DTZ_STR(size))
+#endif

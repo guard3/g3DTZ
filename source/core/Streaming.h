@@ -73,37 +73,20 @@ private:
 	int32 field_1E370;
 #else
 	boolean m_disableStreaming;
-	int32 m_memoryUsed;        // 0x74000
-	int32 m_texOffset;         // Offset in the streaming table where the textures are listed
-	int32 m_colOffset;         // Offset in the streaming table where the collisions are listed
-	int32 m_anmOffset;         // Offset in the streaming table where the animations are listed
-	int32 m_numStreamInfos;    // Number of streaming infos in the streaming table;
-	int32 m_numVehiclesLoaded; // 0
-	int field_1C;              // 0xC
+	int32 m_memoryUsed;               // 0x74000
+	int32 m_texOffset;                // Offset in the streaming table where the textures are listed
+	int32 m_colOffset;                // Offset in the streaming table where the collisions are listed
+	int32 m_anmOffset;                // Offset in the streaming table where the animations are listed
+	int32 m_numStreamInfos;           // Number of streaming infos in the streaming table;
+	int32 m_numVehiclesLoaded;        // 0
+	int32 m_desiredNumVehiclesLoaded; // 12
 	int32 m_vehiclesLoaded[20];
 	int32 m_lastVehicleDeleted;
 	int field_74;
-	int field_78;
-	int field_7C;
-	int field_80;
-	int field_84;
-	int field_88;
-	int field_8C;
-	int field_90;
-#ifdef PS2
-	int field_94;
-	int field_98;
-	int field_9C;
-	int field_A0;
-	int field_A4;
-	int field_A8;
-	int field_AC;
-	int field_B0;
-	int field_B4;
-	int field_B8;
+	int32 m_currentPedGrp;
+	boolean m_bIsPedFromPedGroupLoaded[16];
 	int field_BC;
 	int field_C0;
-#endif
 	int cdimageFile; // file descriptor of .IMG file
 	CStreamingInfo* m_aStreamingInfos;
 #ifdef PS2
@@ -138,3 +121,8 @@ public:
 #endif
 	static void Initialize(CStreaming* inst) { mspInst = inst; }
 };
+assert_size(CStreaming,
+/* LCS_PSP */ 0x1E374,
+/* LCS_PS2 */ 0x1E3A4,
+/* VCS_PSP */ 184,
+/* VCS_PS2 */ 240);

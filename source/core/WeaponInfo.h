@@ -19,11 +19,6 @@ private:
 	float     m_fRadius;
 	float     m_fLifeSpan;
 	float     m_fSpread;
-#ifdef LCS
-	uint8     padding[8]; // *
-#else                     // * Padding for CVuVector
-	uint8     padding[4]; // *
-#endif
 	CVuVector m_vecFireOffset;
 	int32     m_AnimToPlay;
 	float     m_fAnimLoopStart;
@@ -41,7 +36,7 @@ private:
 public:
 	inline static constexpr int TOTALWEAPONS = 37;
 #else
-	uint8     padding2[4];
+	//uint8     padding2[4];
 public:
 	inline static constexpr int TOTALWEAPONS = 40;
 #endif
@@ -72,5 +67,10 @@ public:
 	const char* GetAnimName();
 	const char* GetFlags();
 };
+assert_size(CWeaponInfo,
+/* LCS_PSP */ 0x70,
+/* LCS_PS2 */ 0x70,
+/* VCS_PSP */ 0x70,
+/* VCS_PS2 */ 0x70);
 
 inline CWeaponInfo** gpWeaponTables;
