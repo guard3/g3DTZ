@@ -27,7 +27,7 @@ private:
 	int16 x, y, z, w, dt;
 
 protected:
-	inline static float HalfToFloat(int16 x)
+	static float HalfToFloat(int16 x)
 	{
 		/*
 		 * The real numbers in key frames are 16-bit "half" floats
@@ -39,8 +39,8 @@ protected:
 	}
 
 public:
-	inline CQuaternion GetRotation()  { return { HalfToFloat(x), HalfToFloat(y), HalfToFloat(z), HalfToFloat(w) }; }
-	inline float       GetDeltaTime() { return HalfToFloat(dt); }
+	CQuaternion GetRotation()  { return { HalfToFloat(x), HalfToFloat(y), HalfToFloat(z), HalfToFloat(w) }; }
+	float       GetDeltaTime() { return HalfToFloat(dt); }
 };
 
 class KeyFrameTrans : public KeyFrame
@@ -49,7 +49,7 @@ private:
 	int16 x, y, z;
 
 public:
-	inline CVector GetTranslation() { return { HalfToFloat(x), HalfToFloat(y), HalfToFloat(z) }; }
+	CVector GetTranslation() { return { HalfToFloat(x), HalfToFloat(y), HalfToFloat(z) }; }
 };
 
 enum eSequenceFlag : uint16
@@ -127,14 +127,19 @@ struct CAnimBlendAssociation
 class CAnimBlendAssocGroup
 {
 public:
-	CAnimBlock* animBlock;
-	CAnimBlendAssociation* assocList;
-	int32 numAssociations;
-	int32 baseIndex; // index of first assoc in assocList
-	int32 groupId;   // index in CAnimManager::m_aAnimAssocGroups
+	CAnimBlock* m_pAnimBlock;
+	CAnimBlendAssociation* m_aAssociationArray;
+	int32 m_numAssociations;
+	int32 m_idOffset; // index of first assoc in assocList
+	int32 m_grpId;    // index in CAnimManager::m_aAnimAssocGroups
 
 	const char* GetName();
 };
+assert_size(CAnimBlendAssocGroup,
+/* LCS PSP */ 0x14,
+/* LCS PS2 */ 0x14,
+/* VCS PSP */ 0x14,
+/* VCS PS2 */ 0x14);
 
 class CAnimManager
 {
@@ -157,11 +162,11 @@ private:
 	static CAnimManager* mspInst;
 
 public:
-	inline static void Load(CAnimManager* inst) { mspInst = inst; }
+	static void Load(CAnimManager* inst) { mspInst = inst; }
 
-	inline static CAnimBlendTree* GetAnimation(int index) { return mspInst->m_aAnimations + index; }
-	inline static CAnimBlock* GetAnimationBlock(int index) { return mspInst->m_aAnimBlocks + index; }
-	inline static int32 GetNumAnimations() { return mspInst->m_numAnimations; }
-	inline static int32 GetNumAnimBlocks() { return mspInst->m_numAnimBlocks; }
-	inline static CAnimBlendAssocGroup* GetAssocGroup(int index) { return mspInst->m_aAnimAssocGroups + index; }
+	static CAnimBlendTree* GetAnimation(int index) { return mspInst->m_aAnimations + index; }
+	static CAnimBlock* GetAnimationBlock(int index) { return mspInst->m_aAnimBlocks + index; }
+	static int32 GetNumAnimations() { return mspInst->m_numAnimations; }
+	static int32 GetNumAnimBlocks() { return mspInst->m_numAnimBlocks; }
+	static CAnimBlendAssocGroup* GetAssocGroup(int index) { return mspInst->m_aAnimAssocGroups + index; }
 };

@@ -48,12 +48,12 @@ const char* CAnimBlendAssocGroup::GetName()
 	 * Anim assoc group names aren't needed in the game, so LCS has them discarded.
 	 * For that reason, we need to have a table with names, figured out from LCS mobile.
 	 */
-	return mAnimAssocGroupNames[groupId];
+	return mAnimAssocGroupNames[m_grpId];
 #else
 	/*
 	 * VCS on the other hand seems to have some temporary tables(?) still loaded in memory
 	 * So we can salvage names and other stuff from there
 	 */
-	return CAnimManager::mspInst->assocGroups[groupId].groupname;
+	return CAnimManager::mspInst->assocGroups[m_grpId].groupname;
 #endif
 }

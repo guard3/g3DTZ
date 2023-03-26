@@ -12,6 +12,6 @@ const char* tFightMove::GetAnimationName()
 	case 205:
 		return "default";
 	default:
-		return CAnimManager::GetAssocGroup(0)->assocList[animId].hierarchy->name;
+		return CAnimManager::GetAssocGroup(0)->m_aAssociationArray[animId].hierarchy->name;
 	}
 }
