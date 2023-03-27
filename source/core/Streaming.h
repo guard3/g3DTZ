@@ -122,7 +122,7 @@ public:
 	static void Initialize(CStreaming* inst) { mspInst = inst; }
 };
 assert_size(CStreaming,
-/* LCS_PSP */ 0x1E374,
-/* LCS_PS2 */ 0x1E3A4,
-/* VCS_PSP */ 184,
-/* VCS_PS2 */ 240);
+/* LCS PSP */ 0x1E374,
+/* LCS PS2 */ 0x1E3A4,
+/* VCS PSP */ 184,
+/* VCS PS2 */ 240);

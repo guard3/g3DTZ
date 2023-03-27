@@ -1,26 +1,6 @@
 #pragma once
 #include "Maths.h"
 
-class CAnimAssocGroup
-{
-public:
-	char groupname[24];
-	char blockname[20];
-	int32 animBase;	// first ID, index into CAnimManager_vcs::associations
-	int32 numAnims;
-};
-
-class CAnimAssoc
-{
-public:
-	int32 id;
-	char name[44];	// this is most certainly too long but the data is uninitialized
-	int8 unk1;
-	// 3 bytes uninitialized
-	int16 unk2;
-	int16 unk3;
-};
-
 class KeyFrame
 {
 private:
@@ -104,25 +84,28 @@ struct CAnimBlendAssociation
 {
 	CAnimBlendAssociation* next;
 	CAnimBlendAssociation* prev;
-	float unk1, unk2, unk3, unk4;
-	//int16 flags;
-	//float timeStep;
-	//float blendAmount;
-	//int8 field_14;
-	int32 numNodes;
-	CAnimBlendNode* nodes;
+	int flags;
+	int field_C;
+	float m_fBlendAmount;
+	int field_14;
+	int32 m_iNumAnimBlendNodes;
+	CAnimBlendNode* m_pAnimBlendNodes;
 	CAnimBlendTree* hierarchy;
-	float blendDelta;
-	float currentTime;
+	float m_fBlendDelta;
+	float m_fCurrentTime;
 	float speed;
 	int16 animId;
 	int16 groupId;
 	int32 callbackType;
 	void* callback; // pointer to callback function; void (*callback)(CAnimBlendAssociation*, void*);
 	void* callbackArg;
-	//int8 field_40;
-	float unk5;
+	int field_40;
 };
+assert_size(CAnimBlendAssociation,
+/* LCS PSP */ 0x44,
+/* LCS PS2 */ 0x44,
+/* VCS PSP */ 0x44,
+/* VCS PS2 */ 0x44);
 
 class CAnimBlendAssocGroup
 {
@@ -143,15 +126,43 @@ assert_size(CAnimBlendAssocGroup,
 
 class CAnimManager
 {
-private:
-#ifdef VCS
-	friend class CAnimBlendAssocGroup;
+public:
+#ifdef LCS
+	struct AnimDescriptor;
+	struct AnimAssocDefinition {
+		const char* pName;
+		const char* pBlockName;
+		int32 associatedClumpId; // doubt that "clump" is part on the name on stories; names are from SA anyway...
+		int32 numReqAnims;
+		const char** aReqAnims;
+		AnimDescriptor* aAnimDesc;
+	};
 
-	CAnimAssocGroup assocGroups[200];  // * 
-	CAnimAssoc      associations[990]; // *
-	int32           numAssocGroups;    // * Extra VCS stuff, interesting...
-	int32           numAssocs;         // *
-	int32           numUnk;            // *
+	static const AnimAssocDefinition ms_aAnimAssocDefinitions[];
+#else
+	/* Needs more reversing - Name taken from SA */
+	struct AnimAssocDefinition {
+		char groupname[24];
+		char blockname[20];
+		int32 animBase;	// first ID, index into CAnimManager_vcs::associations
+		int32 numAnims;
+	};
+	/* Needs more reversing too */
+	struct AnimDescriptor { 
+		int32 id;      // AnimationId type
+		char name[44]; // * Surprisingly long array; most likely length is 45 with last one set to 0 as a null terminator
+		int8 unk1;     // *
+		uint32 defaultFlags;
+	};
+	assert_size(AnimDescriptor, 0, 0,
+	/* VCS PSP */ 0x38,
+	/* VCS PS2 */ 0x38);
+
+	AnimAssocDefinition m_aAnimAssocDefinitions[200];
+	AnimDescriptor      associations[990];
+	int32               numAssocGroups;
+	int32               numAssocs;
+	int32               numUnk;
 #endif
 	CAnimBlendTree*       m_aAnimations;
 	CAnimBlock*           m_aAnimBlocks;
@@ -170,3 +181,13 @@ public:
 	static int32 GetNumAnimBlocks() { return mspInst->m_numAnimBlocks; }
 	static CAnimBlendAssocGroup* GetAssocGroup(int index) { return mspInst->m_aAnimAssocGroups + index; }
 };
+assert_size(CAnimManager::AnimAssocDefinition,
+/* LCS PSP */ 0x18,
+/* LCS PS2 */ 0x18,
+/* VCS PSP */ 0x34,
+/* VCS PS2 */ 0x34);
+assert_size(CAnimManager,
+/* LCS PSP */ 0x14,
+/* LCS PS2 */ 0x14,
+/* VCS PSP */ 0x10150,
+/* VCS PS2 */ 0x10150);
