@@ -257,14 +257,14 @@ bool ExtractAnimations()
 	for (int32 ab = 0; ab < CAnimManager::GetNumAnimBlocks(); ++ab)
 	{
 		CAnimBlock& animBlock = *CAnimManager::GetAnimationBlock(ab);
-		if (!animBlock.isLoaded)
+		if (!animBlock.m_loaded)
 			continue;
 		/*
 		 * Here we create a ifp::AnimPackage based on GAME.DTZ structures.
 		 * This ifp::AnimPackage will then be passed to WriteIFP() that will generate the desired .ifp file.
 		 */
 		ifp::AnimPackage animPackage{ 0 };
-		strcpy(animPackage.name, animBlock.name); // ifp::AnimPackage::name is [24] vs [20] on CAnimBlock::name. So no need for str*n*cpy here
+		strcpy(animPackage.name, animBlock.m_name); // ifp::AnimPackage::name is [24] vs [20] on CAnimBlock::name. So no need for str*n*cpy here
 		animPackage.numAnimations = animBlock.numAnims;
 		animPackage.animations = new ifp::AnimHierarchy[animPackage.numAnimations]();
 
@@ -332,7 +332,7 @@ bool ExtractAnimations()
 		}
 
 		char filename[24];
-		strcpy(filename, animBlock.name);
+		strcpy(filename, animBlock.m_name);
 		strcat(filename, ".ifp");
 
 		FILE* f = fopen(filename, "wb");

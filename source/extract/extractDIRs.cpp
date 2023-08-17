@@ -93,7 +93,7 @@ bool ExtractDIRs()
 	{
 		auto& s = CStreaming::GetAnmStreamingInfo(i);
 		if (s.GetSize())
-			push_new_dir(s.GetPosition(), s.GetSize(), CAnimManager::GetAnimationBlock(i)->name, ".anim");
+			push_new_dir(s.GetPosition(), s.GetSize(), CAnimManager::GetAnimationBlock(i)->m_name, ".anim");
 	}
 
 	/* Sort the .DIR entry vector by offset */

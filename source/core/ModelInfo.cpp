@@ -80,7 +80,7 @@ CObjectInfo* CBaseModelInfo::GetObjectInfo()
 
 const char* CWeaponModelInfo::GetAnimBlockName()
 {
-	return m_animBlockId == -1 ? "null" : CAnimManager::GetAnimationBlock(m_animBlockId)->name;
+	return m_animBlockId == -1 ? "null" : CAnimManager::GetAnimationBlock(m_animBlockId)->m_name;
 }
 
 const char* CVehicleModelInfo::GetVehicleTypeName()
@@ -106,7 +106,7 @@ const char* CVehicleModelInfo::GetVehicleTypeName()
 
 const char* CVehicleModelInfo::GetAnimBlockName()
 {
-	return m_animBlockId == -1 ? "null" : CAnimManager::GetAnimationBlock(m_animBlockId)->name;
+	return m_animBlockId == -1 ? "null" : CAnimManager::GetAnimationBlock(m_animBlockId)->m_name;
 }
 
 const char* CVehicleModelInfo::GetVehicleClass()
@@ -174,7 +174,7 @@ const char* CPedModelInfo::GetPedType()
 
 const char* CPedModelInfo::GetAnimBlock()
 {
-	return m_animGroupId == -1 ? "null" : CAnimManager::GetAnimationBlock(m_animGroupId)->name;
+	return m_animGroupId == -1 ? "null" : CAnimManager::GetAnimationBlock(m_animGroupId)->m_name;
 }
 
 const char* CPedModelInfo::GetPedStatType()

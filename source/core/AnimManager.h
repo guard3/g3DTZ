@@ -65,9 +65,9 @@ struct CAnimBlendTree
 
 struct CAnimBlock
 {
-	char    name[20];
-	boolean isLoaded;
-	int16   refCount;
+	char    m_name[20];
+	boolean m_loaded;
+	int16   m_numRefs;
 	int32   firstIndex; // into the blend tree array; CAnimManager::m_aAnimations
 	int32   numAnims;
 	void*   chunkData; // pointer to relocatable chunk, includes header
