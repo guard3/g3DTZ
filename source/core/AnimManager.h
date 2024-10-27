@@ -124,6 +124,13 @@ assert_size(CAnimBlendAssocGroup,
 /* VCS PSP */ 0x14,
 /* VCS PS2 */ 0x14);
 
+enum AnimationId : int32 {};
+assert_size(AnimationId,
+/* LCS PSP */ 4,
+/* LCS PS2 */ 4,
+/* VCS PSP */ 4,
+/* VCS PS2 */ 4);
+
 class CAnimManager
 {
 public:
@@ -142,16 +149,15 @@ public:
 #else
 	/* Needs more reversing - Name taken from SA */
 	struct AnimAssocDefinition {
-		char groupname[24];
-		char blockname[20];
-		int32 animBase;	// first ID, index into CAnimManager_vcs::associations
+		char pName[24];
+		char pBlockName[20];
+		int32 firstAnim;
 		int32 numAnims;
 	};
 	/* Needs more reversing too */
 	struct AnimDescriptor { 
-		int32 id;      // AnimationId type
-		char name[44]; // * Surprisingly long array; most likely length is 45 with last one set to 0 as a null terminator
-		int8 unk1;     // *
+		AnimationId id;
+		char name[45];
 		uint32 defaultFlags;
 	};
 	assert_size(AnimDescriptor, 0, 0,
@@ -159,10 +165,10 @@ public:
 	/* VCS PS2 */ 0x38);
 
 	AnimAssocDefinition m_aAnimAssocDefinitions[200];
-	AnimDescriptor      associations[990];
-	int32               numAssocGroups;
-	int32               numAssocs;
-	int32               numUnk;
+	AnimDescriptor      m_aAnimDescriptors[990];
+	int32               m_numAnimAssocDefinitions;
+	int32               m_numAnimDescriptors;
+	int32               field_10138;
 #endif
 	CAnimBlendTree*       m_aAnimations;
 	CAnimBlock*           m_aAnimBlocks;

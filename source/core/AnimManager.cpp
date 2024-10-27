@@ -109,6 +109,6 @@ const char* CAnimBlendAssocGroup::GetName()
 	 * VCS on the other hand seems to have some temporary tables(?) still loaded in memory
 	 * So we can salvage names and other stuff from there
 	 */
-	return CAnimManager::mspInst->m_aAnimAssocDefinitions[m_grpId].groupname;
+	return CAnimManager::mspInst->m_aAnimAssocDefinitions[m_grpId].pName;
 #endif
 }
