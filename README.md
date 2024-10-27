@@ -23,7 +23,7 @@ premake5 --vs2017
 The **g3DTZ** solution has 4 configurations for each GAME.DTZ version, plus **Debug** and **Release**.
 ## Release
 
-The current release is **g3DTZ v2.0** which you can download [here](https://github.com/guard3/g3DTZ/raw/master/release/g3DTZ_v2.0.zip)
+The current release is **g3DTZ v2.1** which you can download [here](https://github.com/guard3/g3DTZ/releases/download/v2.1/g3DTZ_v2.1.zip)
 
 This release provides extraction support for:
 - IDE files
@@ -48,6 +48,7 @@ This release provides extraction support for:
 - cdimage DIR
 - cutscene DIR
 - GAME.DAT *(aka decompressed GAME.DTZ)*
+- Individual `.anim` files
 ## Notes
 - The last 5 values of object.dat from VCS are unknown, probably different way of assigning damage effects
 - There are no actual handling names in VCS, so the tool extracts with modelnames instead
