@@ -43,7 +43,7 @@ project "g3DTZ"
 	location       "projects\\g3DTZ"
 	kind           "ConsoleApp"
 	language       "C++"
-	cppdialect     "C++17"
+	cppdialect     "C++20"
 	sysincludedirs "zlib/include"
 	includedirs {
 		"$(ProjectDir)",

@@ -331,18 +331,18 @@ bool ExtractAnimations() {
 	 * Expected ones for LCS: ped.ifp
 	 * Expected ones for VCS: ped.ifp, driveby.ifp, fight.ifp, swim.ifp
 	 */
-	for (int32 i = 0; i < CAnimManager::GetNumAnimBlocks(); ++i) {
+	for (int32 i = 0; i < CAnimManager::GetNumAnimBlocks(); ++i) try {
 		CAnimBlock* pAnimBlock = CAnimManager::GetAnimationBlock(i);
 		if (!pAnimBlock->m_loaded)
 			continue;
 		/* Create the output file */
 		auto f = [pAnimBlock] {
-			char filename[256]{};
+			char filename[128]{};
 			std::format_to(filename, "{}.ifp", pAnimBlock->m_name);
 			if (std::FILE* f = fopen(filename, "wb")) {
 				return std::unique_ptr<std::FILE, int(*)(std::FILE*)>(f, std::fclose);
 			}
-			throw std::bad_alloc();
+			throw std::runtime_error("Can't open output IFP file.");
 		}();
 		/* Collect all anim trees */
 		std::vector<CAnimBlendTree*> treePtrs;
@@ -351,6 +351,12 @@ bool ExtractAnimations() {
 			treePtrs.push_back(CAnimManager::GetAnimation(pAnimBlock->firstIndex + i));
 		/* Write all trees to the output file */
 		ExportAnimations(f.get(), pAnimBlock->m_name, treePtrs);
+	} catch (const std::exception& e) {
+		ErrorBox("%s", e.what());
+		return false;
+	} catch (...) {
+		ErrorBox("An error occurred.");
+		return false;
 	}
 
 #ifdef VCS
