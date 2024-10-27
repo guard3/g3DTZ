@@ -3,15 +3,20 @@
 #include "Utils.h"
 #include "FileSystem.h"
 #include <map>
+#include <string>
+#include <span>
+#include <vector>
+#include <memory>
+#include <format>
 
-std::map<int, const char*> bones{
+static std::map<int, const char*> bones{
 	{ 0, "Root"   },
 	{ 1, "Pelvis" },
 	{ 2, "Spine"  },
 	{ 3, "Spine1" },
 	{ 4, "Neck"   },
 	{ 5, "Head"   },
-	{ 6, "Jaw"    },
+	{ 6, "jaw"    },
 
 	{ 21, "Bip01 R Clavicle" },
 	{ 22, "R UpperArm"       },
@@ -129,8 +134,8 @@ namespace ifp
 		}
 
 	public:
-		char name[24];
-		int numAnimations;
+		char name[24]{};
+		int numAnimations = 0;
 		AnimHierarchy* animations = nullptr;
 
 		~AnimPackage() { delete[] animations; }
@@ -237,112 +242,115 @@ namespace ifp
 	};
 }
 
-bool ExtractAnimations()
-{
+void
+ExportAnimations(std::FILE* outFile, std::string_view blockName, std::span<CAnimBlendTree*> animTrees) {
+	// The name that will be used for unused bone names
+	char unknownBoneTagName[32] = "Unknown BoneTag ";
+	/*
+	* Here we create a ifp::AnimPackage based on GAME.DTZ structures.
+	* This ifp::AnimPackage will then be passed to WriteIFP() that will generate the desired .ifp file.
+	*/
+	ifp::AnimPackage animPackage{};
+	blockName.copy(animPackage.name, std::size(animPackage.name) - 1);
+	animPackage.numAnimations = animTrees.size();
+	animPackage.animations = new ifp::AnimHierarchy[animPackage.numAnimations]();
+
+	// Create anim hierarchies for animPackage
+	for (std::size_t i = 0; i < animTrees.size(); ++i) {
+		CAnimBlendTree* hier = animTrees[i];
+		strcpy(animPackage.animations[i].name, hier->name);
+		animPackage.animations[i].nodes = new ifp::AnimNode[hier->numSequences]();
+		/*
+		 * Some CAnimBlendSequences in VCS have 0 keyframes (because the sequence is linked to an unused bone and, unlike LCS, VCS ignores them completely).
+		 * An ifp file isn't supposed to have empty sequences.
+		 * This can make the game crash when trying to load extracted ifps,
+		 * because it tries to calculate the total animation time based on keyframes that don't exist!
+		 * So in the extraction we only keep the non-empty ones.
+		 */
+		int currSeq = 0;
+		for (int32 n = 0; n < hier->numSequences; ++n)
+		{
+			CAnimBlendSequence& seq = hier->blendSequences[n];
+			if (seq.numFrames == 0)
+				continue;
+
+			if (bones[seq.boneTag])
+			{
+				strcpy(animPackage.animations[i].nodes[currSeq].name, bones[seq.boneTag]);
+			}
+			else
+			{
+				_itoa(currSeq, unknownBoneTagName + 17, 10);
+				strcpy(animPackage.animations[i].nodes[currSeq].name, unknownBoneTagName);
+			}
+			animPackage.animations[i].nodes[currSeq].nodeId = seq.boneTag;
+			animPackage.animations[i].nodes[currSeq].type = seq.flag & 3;
+			/*
+			 * We're doing & 3 to keep only the first 2 flags:
+			 *     1: SEQ_HAS_ROTATION    or HAS_ROT
+			 *     2: SEQ_HAS_TRANSLATION or HAS_TRANS
+			 * The rest of the flags would be assigned by the game when loading the anims, so we don't need them for ifp export.
+			 * The original ifp file would also have flag 4 : HAS_SCALE, but this is ignored by the game, so in the end we're left with a HAS_TRANS or HAS_ROT sequence!
+			 * This doesn't affect the overall integrity of the exported animation sequence at all.
+			 */
+			animPackage.animations[i].nodes[currSeq].numKeyFrames = seq.numFrames;
+			animPackage.animations[i].nodes[currSeq].keyFrames = new ifp::KeyFrame[seq.numFrames]();
+			for (int32 k = 0; k < seq.numFrames; ++k)
+			{
+				ifp::AnimNode& node = animPackage.animations[i].nodes[currSeq];
+				if (seq.flag & SEQ_HAS_TRANSLATION)
+				{
+					KeyFrameTrans*& frames = reinterpret_cast<KeyFrameTrans*&>(seq.keyFrames);
+					node.keyFrames[k].translation = frames[k].GetTranslation();
+					node.keyFrames[k].time = (k > 0 ? node.keyFrames[k - 1].time : 0) + frames[k].GetDeltaTime(); // We add each dt because the frame time in ifp files is absolute
+					if (seq.flag & SEQ_HAS_ROTATION)
+						node.keyFrames[k].rotation = frames[k].GetRotation().GetInverted(); // The rotation quaternion is inverted in memory, so we revert it back
+				}
+				else if (seq.flag & SEQ_HAS_ROTATION)
+				{
+					node.keyFrames[k].rotation = seq.keyFrames[k].GetRotation().GetInverted(); // The rotation quaternion is inverted in memory, so we revert it back
+					node.keyFrames[k].time = (k > 0 ? node.keyFrames[k - 1].time : 0) + seq.keyFrames[k].GetDeltaTime();
+				}
+			}
+			currSeq++;
+		}
+		animPackage.animations[i].numNodes = currSeq;
+	}
+	animPackage.WriteIFP(outFile);
+}
+
+bool ExtractAnimations() {
 #ifdef VCS
-	if (!CFileSystem::CreateAndChangeFolder("anim"))
-	{
+	if (!CFileSystem::CreateAndChangeFolder("anim")) {
 		ErrorBoxCannotCreateFolder("anim");
 		return false;
 	}
 #endif
-
-	// The name that will be used for unused bone names
-	char unknownBoneTagName[32] = "Unknown BoneTag ";
 	/*
 	 * Extract each CAnimBlock that's loaded in memory
 	 * Expected ones for LCS: ped.ifp
 	 * Expected ones for VCS: ped.ifp, driveby.ifp, fight.ifp, swim.ifp
 	 */
-	for (int32 ab = 0; ab < CAnimManager::GetNumAnimBlocks(); ++ab)
-	{
-		CAnimBlock& animBlock = *CAnimManager::GetAnimationBlock(ab);
-		if (!animBlock.m_loaded)
+	for (int32 i = 0; i < CAnimManager::GetNumAnimBlocks(); ++i) {
+		CAnimBlock* pAnimBlock = CAnimManager::GetAnimationBlock(i);
+		if (!pAnimBlock->m_loaded)
 			continue;
-		/*
-		 * Here we create a ifp::AnimPackage based on GAME.DTZ structures.
-		 * This ifp::AnimPackage will then be passed to WriteIFP() that will generate the desired .ifp file.
-		 */
-		ifp::AnimPackage animPackage{ 0 };
-		strcpy(animPackage.name, animBlock.m_name); // ifp::AnimPackage::name is [24] vs [20] on CAnimBlock::name. So no need for str*n*cpy here
-		animPackage.numAnimations = animBlock.numAnims;
-		animPackage.animations = new ifp::AnimHierarchy[animPackage.numAnimations]();
-
-		// Create anim hierarchies for animPackage
-		for (int32 h = 0; h < animBlock.numAnims; ++h)
-		{
-			CAnimBlendTree& hier = *CAnimManager::GetAnimation(animBlock.firstIndex + h);
-			strcpy(animPackage.animations[h].name, hier.name);
-			animPackage.animations[h].nodes = new ifp::AnimNode[hier.numSequences]();
-			/*
-			 * Some CAnimBlendSequences in VCS have 0 keyframes (because the sequence is linked to an unused bone and, unlike LCS, VCS ignores them completely).
-			 * An ifp file isn't supposed to have empty sequences.
-			 * This can make the game crash when trying to load extracted ifps,
-			 * because it tries to calculate the total animation time based on keyframes that don't exist!
-			 * So in the extraction we only keep the non-empty ones.
-			 */
-			int currSeq = 0;
-			for (int32 n = 0; n < hier.numSequences; ++n)
-			{
-				CAnimBlendSequence& seq = hier.blendSequences[n];
-				if (seq.numFrames == 0)
-					continue;
-
-				if (bones[seq.boneTag])
-				{
-					strcpy(animPackage.animations[h].nodes[currSeq].name, bones[seq.boneTag]);
-				}
-				else
-				{
-					_itoa(currSeq, unknownBoneTagName + 17, 10);
-					strcpy(animPackage.animations[h].nodes[currSeq].name, unknownBoneTagName);
-				}
-				animPackage.animations[h].nodes[currSeq].nodeId = seq.boneTag;
-				animPackage.animations[h].nodes[currSeq].type = seq.flag & 3;
-				/*
-				 * We're doing & 3 to keep only the first 2 flags:
-				 *     1: SEQ_HAS_ROTATION    or HAS_ROT
-				 *     2: SEQ_HAS_TRANSLATION or HAS_TRANS
-				 * The rest of the flags would be assigned by the game when loading the anims, so we don't need them for ifp export.
-				 * The original ifp file would also have flag 4 : HAS_SCALE, but this is ignored by the game, so in the end we're left with a HAS_TRANS or HAS_ROT sequence!
-				 * This doesn't affect the overall integrity of the exported animation sequence at all.
-				 */
-				animPackage.animations[h].nodes[currSeq].numKeyFrames = seq.numFrames;
-				animPackage.animations[h].nodes[currSeq].keyFrames = new ifp::KeyFrame[seq.numFrames]();
-				for (int32 k = 0; k < seq.numFrames; ++k)
-				{
-					ifp::AnimNode& node = animPackage.animations[h].nodes[currSeq];
-					if (seq.flag & SEQ_HAS_TRANSLATION)
-					{
-						KeyFrameTrans*& frames = reinterpret_cast<KeyFrameTrans*&>(seq.keyFrames);
-						node.keyFrames[k].translation = frames[k].GetTranslation();
-						node.keyFrames[k].time = (k > 0 ? node.keyFrames[k - 1].time : 0) + frames[k].GetDeltaTime(); // We add each dt because the frame time in ifp files is absolute
-						if (seq.flag & SEQ_HAS_ROTATION)
-							node.keyFrames[k].rotation = frames[k].GetRotation().GetInverted(); // The rotation quaternion is inverted in memory, so we revert it back
-					}
-					else if (seq.flag & SEQ_HAS_ROTATION)
-					{
-						node.keyFrames[k].rotation = seq.keyFrames[k].GetRotation().GetInverted(); // The rotation quaternion is inverted in memory, so we revert it back
-						node.keyFrames[k].time = (k > 0 ? node.keyFrames[k - 1].time : 0) + seq.keyFrames[k].GetDeltaTime();
-					}
-				}
-				currSeq++;
+		/* Create the output file */
+		auto f = [pAnimBlock] {
+			char filename[256]{};
+			std::format_to(filename, "{}.ifp", pAnimBlock->m_name);
+			if (std::FILE* f = fopen(filename, "wb")) {
+				return std::unique_ptr<std::FILE, int(*)(std::FILE*)>(f, std::fclose);
 			}
-			animPackage.animations[h].numNodes = currSeq;
-		}
-
-		char filename[24];
-		strcpy(filename, animBlock.m_name);
-		strcat(filename, ".ifp");
-
-		FILE* f = fopen(filename, "wb");
-		if (!f)
-		{
-			ErrorBoxCannotCreateFile(filename);
-			return false;
-		}
-		animPackage.WriteIFP(f);
-		fclose(f);
+			throw std::bad_alloc();
+		}();
+		/* Collect all anim trees */
+		std::vector<CAnimBlendTree*> treePtrs;
+		treePtrs.reserve(pAnimBlock->numAnims);
+		for (int32 i = 0; i < pAnimBlock->numAnims; ++i)
+			treePtrs.push_back(CAnimManager::GetAnimation(pAnimBlock->firstIndex + i));
+		/* Write all trees to the output file */
+		ExportAnimations(f.get(), pAnimBlock->m_name, treePtrs);
 	}
 
 #ifdef VCS
