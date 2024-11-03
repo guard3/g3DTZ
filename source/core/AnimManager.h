@@ -14,7 +14,11 @@ protected:
 		 * The code below converts a 16-bit float to a standard 32-bit one.
 		 * Guide on bitwise operators acquired from http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
 		 */
-		uint32 result = ((x & 0x8000) << 16) | (((x & 0x7C00) + 0x1C000) << 13) | ((x & 0x03FF) << 13);
+		uint32 result;
+		if ((x & 0x7FFF) == 0)
+			result = x << 16;
+		else
+			result = ((x & 0x8000) << 16) | (((x & 0x7C00) + 0x1C000) << 13) | ((x & 0x03FF) << 13);
 		return reinterpret_cast<float&>(result);
 	}
 
@@ -72,7 +76,7 @@ struct CAnimBlock
 	int32   numAnims;
 	void*   chunkData; // pointer to relocatable chunk, includes header
 #ifdef VCS
-	int32 unk0; // maybe ids to the extra structures
+	int32 unk0;
 	int32 unk1;
 #endif
 };
