@@ -1,11 +1,10 @@
 #include <zlib.h>
 #include "Win32.h"
 #include "ResourceImage.h"
-#include "RelocatableChunk.h"
+#include "Base.h"
 #include "Utils.h"
 #include "FileSystem.h"
 #include <stdlib.h>
-//#include <iostream>
 
 #include "RslEngine.h"
 #include "Pools.h"
@@ -183,8 +182,7 @@ bool LoadResourceImage()
 		hFile = INVALID_HANDLE_VALUE;
 
 		/* If loaded file ident is 'GTAG', then we have loaded a GAME.DAT */
-		constexpr uint32 GTAGIDENT = 0x47544147;
-		if (reinterpret_cast<cRelocChunk*>(source)->Ident == GTAGIDENT)
+		if (reinterpret_cast<base::sChunkHeader*>(source)->ident == 'GTAG')
 		{
 			gResourceMem = source;
 			return true;
@@ -267,14 +265,7 @@ bool LoadResourceImage()
 	}
 
 	/* Now that GAME.DTZ is fully loaded, create a ResourceImage reference */
-	cRelocChunk& chunk = reinterpret_cast<cRelocChunk*>(gResourceMem)->Fixup();
-	void* result = realloc(gResourceMem, chunk.Shrink ? chunk.DataSize : chunk.FileSize);
-	if (!result)
-	{
-		ErrorBox("Reallocation error.");
-		return false;
-	}
-	sResourceImage* pResourceImage = reinterpret_cast<sResourceImage*>(chunk.DataPtr);
+	sResourceImage* pResourceImage = reinterpret_cast<sResourceImage*>(base::cRelocatableChunk::Load(gResourceMem));
 
 	/* Initialize pools */
 	CPools::LoadPool(pResourceImage->buildingPool);

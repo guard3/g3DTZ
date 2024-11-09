@@ -1,14 +1,16 @@
-#pragma once
+#ifndef G3DTZ_COMMON_H
+#define G3DTZ_COMMON_H
 #include <cstdint>
+#include <type_traits>
 
 typedef wchar_t wchar;
 
-typedef int8_t  int8;
-typedef int16_t int16;
-typedef int32_t int32;
-typedef uint8_t  uint8;
-typedef uint16_t uint16;
-typedef uint32_t uint32;
+typedef std::int8_t  int8;
+typedef std::int16_t int16;
+typedef std::int32_t int32;
+typedef std::uint8_t  uint8;
+typedef std::uint16_t uint16;
+typedef std::uint32_t uint32;
 
 typedef long long llong;
 typedef unsigned char      uchar;
@@ -38,37 +40,30 @@ typedef uint32 bool32;
 #define G3DTZ_NAME   GAME_NAME   "_" PLATFORM_NAME
 #define G3DTZ_NAME_W GAME_NAME_W "_" PLATFORM_NAME
 
-#define __property(func) __declspec(property(get=func))
-
 /* Configure the appropriate bool size for each platform: 8bit for PSP, 32bit for PS2 */
 namespace detail {
+	using platform_type =
 #ifdef PS2
-	typedef bool32 boolean;
+		bool32;
 #else
-	typedef bool8  boolean;
+		bool8;
 #endif
-
-	template<typename T, bool = sizeof(T) == sizeof(boolean)>
-	struct platform_bool {
-		typedef T type;
-	};
-
-	template<typename T>
-	struct platform_bool<T, false> {
-		typedef boolean type;
-	};
+	using boolean = std::conditional_t<sizeof(bool) == sizeof(platform_type), bool, platform_type>;
 }
-typedef typename detail::platform_bool<bool>::type boolean;
+using detail::boolean;
 
-#define _G3DTZ_STR2(value) #value
-#define _G3DTZ_STR(value) _G3DTZ_STR2(value)
+#define G3DTZ_STR_IMPL(value) #value
+#define G3DTZ_STR(value) G3DTZ_STR_IMPL(value)
+#define G3DTZ_ASSERT_SIZE_IMPL(type, size) static_assert(sizeof(type) == (size), "The size of " #type " is not " G3DTZ_STR(size))
 
 #if defined LCS && defined PSP
-#define assert_size(type, size, _, __, ___) static_assert(sizeof(type) == (size), "The size of " #type " is not " _G3DTZ_STR(size))
+#define assert_size(type, size, _, __, ___) G3DTZ_ASSERT_SIZE_IMPL(type, size)
 #elif defined LCS && defined PS2
-#define assert_size(type, _, size, __, ___) static_assert(sizeof(type) == (size), "The size of " #type " is not " _G3DTZ_STR(size))
+#define assert_size(type, _, size, __, ___) G3DTZ_ASSERT_SIZE_IMPL(type, size)
 #elif defined VCS && defined PSP
-#define assert_size(type, _, __, size, ___) static_assert(sizeof(type) == (size), "The size of " #type " is not " _G3DTZ_STR(size))
+#define assert_size(type, _, __, size, ___) G3DTZ_ASSERT_SIZE_IMPL(type, size)
 #else
-#define assert_size(type, _, __, ___, size) static_assert(sizeof(type) == (size), "The size of " #type " is not " _G3DTZ_STR(size))
+#define assert_size(type, _, __, ___, size) G3DTZ_ASSERT_SIZE_IMPL(type, size)
 #endif
+
+#endif /* G3DTZ_COMMON_H */

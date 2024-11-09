@@ -1,15 +1,15 @@
-#include "Utils.h"
+#include "Base.h"
+#include "Extract.h"
 #include "FileSystem.h"
 #include "ResourceImage.h"
-#include "Extract.h"
-#include <iostream>
-#include <fstream>
+#include "Utils.h"
 #include <filesystem>
-#include "RelocatableChunk.h"
+#include <fstream>
+#include <iostream>
 
 namespace fs = std::filesystem;
 
-void DealWithAnimFile(fs::path, cRelocChunk& header, std::ifstream& inputStream);
+void DealWithAnimFile(fs::path, const base::sChunkHeader& header, std::ifstream& inputStream);
 
 int
 wmain(int argc, const wchar** argv) {
@@ -33,12 +33,12 @@ wmain(int argc, const wchar** argv) {
 	/* Load the header of the input file to determine the type */
 	fs::path argPath = argv[1];
 	std::ifstream inputStream(argPath, std::ios::binary);
-	cRelocChunk header{};
+	base::sChunkHeader header{};
 	if (!inputStream.read(reinterpret_cast<char*>(&header), sizeof(header))) {
 		ErrorBox("Can't open or read from input file.");
 		return ERROR_FILESYSTEM;
 	}
-	if (header.Ident == 'anim') try {
+	if (header.ident == 'anim') try {
 		/* The input is an anim file */
 		DealWithAnimFile(std::move(argPath), header, inputStream);
 		return EXIT_SUCCESS;
@@ -85,17 +85,17 @@ wmain(int argc, const wchar** argv) {
 }
 
 void
-DealWithAnimFile(fs::path inputPath, cRelocChunk& header, std::ifstream& inputStream) {
+DealWithAnimFile(fs::path inputPath, const base::sChunkHeader& header, std::ifstream& inputStream) {
 	/* Override the current working directory because I don't want to deal with CFileSystem crap right now */
 	std::cout << inputPath << '\n';
 	fs::current_path(fs::canonical(inputPath).parent_path());
 	/* Load the rest of the file into a buffer*/
-	std::vector<char> buff(header.FileSize);
+	std::vector<char> buff(header.fileEnd);
 	std::memcpy(buff.data(), &header, sizeof(header));
 	if (!inputStream.read(buff.data() + sizeof(header), buff.size() - sizeof(header)))
 		throw std::runtime_error("Invalid file.");
 	/* Fixup chunk */
-	CAnimBlendTree** pTrees = reinterpret_cast<CAnimBlendTree**>(reinterpret_cast<cRelocChunk*>(buff.data())->Fixup().DataPtr);
+	CAnimBlendTree** pTrees = reinterpret_cast<CAnimBlendTree**>(base::cRelocatableChunk::Load(buff.data()));
 	/* Now here's the thing...
 	 * For proper extraction, GAME.DAT must be loaded because the anim manager has all info about the game's anim blocks, even
 	 * the ones that are not loaded. The .anim files themselves don't have that info. It seems like a stretch to request that
