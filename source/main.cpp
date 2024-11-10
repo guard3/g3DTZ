@@ -1,11 +1,10 @@
-#include "Base.h"
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 #include "Extract.h"
 #include "FileSystem.h"
 #include "ResourceImage.h"
 #include "Utils.h"
-#include <filesystem>
-#include <fstream>
-#include <iostream>
 
 namespace fs = std::filesystem;
 
@@ -13,75 +12,68 @@ void DealWithAnimFile(fs::path, const base::sChunkHeader& header, std::ifstream&
 
 int
 wmain(int argc, const wchar** argv) {
-	/* An enum of error return codes */
-	enum
-	{
-		ERROR_OK,
-		ERROR_ARGS,
-		ERROR_FILESYSTEM,
-		ERROR_RESOURCEIMAGE,
-		ERROR_EXTRACT
-	};
-
 	/* Check that only one argument is specified */
-	if (argc != 2)
-	{
+	if (argc != 2) {
 		ErrorBox("Invalid number of arguments.\nSimply drag n' drop a GAME.DTZ/GAME.DAT or .ANIM file to this executable.");
-		return ERROR_ARGS;
+		return EXIT_FAILURE;
 	}
 
-	/* Load the header of the input file to determine the type */
-	fs::path argPath = argv[1];
-	std::ifstream inputStream(argPath, std::ios::binary);
-	base::sChunkHeader header{};
-	if (!inputStream.read(reinterpret_cast<char*>(&header), sizeof(header))) {
-		ErrorBox("Can't open or read from input file.");
-		return ERROR_FILESYSTEM;
-	}
-	if (header.ident == 'anim') try {
-		/* The input is an anim file */
-		DealWithAnimFile(std::move(argPath), header, inputStream);
+	try {
+		/* Load the header of the input file to determine the type */
+		fs::path argPath = fs::canonical(argv[1]);
+		std::ifstream inputStream(argPath, std::ios::binary);
+		base::sChunkHeader header{};
+		if (!inputStream.read(reinterpret_cast<char*>(&header), sizeof(header))) {
+			ErrorBox("Can't open or read from input file.");
+			return EXIT_SUCCESS;
+		}
+		if (header.ident == 'anim') {
+			/* The input is an anim file */
+			DealWithAnimFile(std::move(argPath), header, inputStream);
+			return EXIT_SUCCESS;
+		}
+		/* Otherwise, input is a GAME.DTZ or GAME.DAT */
+		/* Initialize filesystem */
+		if (!CFileSystem::Initialize(argv[1]))
+			return EXIT_FAILURE;
+
+		/* Load GAME.DTZ */
+		LoadResourceImage(argPath, header, inputStream);
+
+		std::cout << "Extracting...\n";
+#define CHECK(a) if (!(a)) return EXIT_FAILURE;
+		CHECK(ExtractAnimations());
+		CHECK(ExtractIPLs());
+		CHECK(ExtractModelInfoAndStuff());
+		CHECK(ExtractObjectData());
+		CHECK(ExtractFightMoves());
+		CHECK(ExtractPedType());
+		CHECK(ExtractPedStats());
+		CHECK(ExtractPedGroups());
+		CHECK(ExtractWeaponInfo());
+		CHECK(ExtractTimeCycle());
+		CHECK(ExtractSurfaceTable());
+		CHECK(ExtractDIRs());
+		CHECK(ExtractParticle());
+		CHECK(ExtractWaterLevel());
+		CHECK(ExtractZones());
+		CHECK(ExtractPathData());
+		std::cout << "All done!\n";
+
 		return EXIT_SUCCESS;
-	} catch (const std::bad_alloc&) {
+	}
+	catch (const std::bad_alloc&) {
 		ErrorBox("Out of memory.");
 		return EXIT_FAILURE;
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		ErrorBox("%s", e.what());
 		return EXIT_FAILURE;
-	} catch (...) {
-		ErrorBox("An unknown error occured");
+	}
+	catch (...) {
+		ErrorBox("An error occurred.");
 		return EXIT_FAILURE;
 	}
-	/* Otherwise, input is a GAME.DTZ */
-	inputStream.close(); // TODO: improve LoadResourceImage() to accept the already opened stream...
-	/* Initialize filesystem */
-	if (!CFileSystem::Initialize(argv[1]))
-		return ERROR_FILESYSTEM;
-	/* Load GAME.DTZ */
-	if (!LoadResourceImage())
-		return ERROR_RESOURCEIMAGE;
-
-	std::cout << "Extracting...\n";
-#define CHECK(a) if (!(a)) return ERROR_EXTRACT
-	CHECK(ExtractAnimations());
-	CHECK(ExtractIPLs());
-	CHECK(ExtractModelInfoAndStuff());
-	CHECK(ExtractObjectData());
-	CHECK(ExtractFightMoves());
-	CHECK(ExtractPedType());
-	CHECK(ExtractPedStats());
-	CHECK(ExtractPedGroups());
-	CHECK(ExtractWeaponInfo());
-	CHECK(ExtractTimeCycle());
-	CHECK(ExtractSurfaceTable());
-	CHECK(ExtractDIRs());
-	CHECK(ExtractParticle());
-	CHECK(ExtractWaterLevel());
-	CHECK(ExtractZones());
-	CHECK(ExtractPathData());
-	std::cout << "All done!\n";
-
-	return ERROR_OK;
 }
 
 void

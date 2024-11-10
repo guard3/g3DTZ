@@ -1,10 +1,12 @@
+#include <cstddef>
+#include <cstring>
+#include <format>
+#include <fstream>
+#include <stdexcept>
+#include <vector>
 #include <zlib.h>
-#include "Win32.h"
+
 #include "ResourceImage.h"
-#include "Base.h"
-#include "Utils.h"
-#include "FileSystem.h"
-#include <stdlib.h>
 
 #include "RslEngine.h"
 #include "Pools.h"
@@ -31,13 +33,7 @@
 #include "Plane.h"
 #include "SampMan.h"
 
-/* The buffer were GAME.DAT is stored, freed automatically */
-void* gResourceMem = nullptr;
-class cResourceMemAutoClose final
-{
-public:
-	~cResourceMemAutoClose() { free(gResourceMem); }
-} __autoclose;
+namespace fs = std::filesystem;
 
 struct sResourceImage
 {
@@ -123,149 +119,104 @@ struct sResourceImage
 #endif
 };
 
-bool LoadResourceImage()
-{
-	/* Main variables */
-	HANDLE hFile = INVALID_HANDLE_VALUE; // A file handle used for reading and writing files
-	void* source = nullptr;              // The buffer that holds the input file's contents
+void
+LoadResourceImage(fs::path iPath, const base::sChunkHeader& header, std::istream& iStream) {
+	static std::vector<std::byte> mem;
 
-	/* A lambda that handles all the reading and decompressing stuff */
-	auto _loadResourceImage = [&hFile, &source]() {
-		/* Lambdas for error messages */
-		auto ErrorBoxInputFile = [](const char* str) {
-			ErrorBox(L"%ls\n%s", CFileSystem::GetInputFilePath(), str);
-		};
-		auto ErrorBoxInputFileDecompression = [](const char* str) {
-			ErrorBox(L"%ls\n%s\n%s", CFileSystem::GetInputFilePath(), "Cannot decompress file.", str);
-		};
-
-		/* Open file */
-		hFile = CreateFileW(
-			CFileSystem::GetInputFilePath(),                   // Filename
-			GENERIC_READ,                                      // Desired access
-			0,                                                 // Share mode
-			NULL,                                              // Security attributes
-			OPEN_EXISTING,                                     // Creation disposition
-			FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, // Flags and attributes
-			NULL                                               // Template file
-		);
-		if (hFile == INVALID_HANDLE_VALUE)
-		{
-			ErrorBoxInputFile("Cannot open file.");
-			return false;
-		}
-
-		/* Get file size */
-		LARGE_INTEGER large_size;
-		if (!GetFileSizeEx(hFile, &large_size))
-		{
-			ErrorBoxInputFile("Cannot determine file size.");
-			return false;
-		}
-		if (large_size.HighPart != 0)
-		{
-			ErrorBoxInputFile("File too arge to read.");
-			return false;
-		}
-
-		/* Load file */
-		DWORD sourceLen;
-		if (!(source = malloc(large_size.LowPart)))
-		{
-		label_load_file:
-			ErrorBoxInputFile("Cannot load file.");
-			return false;
-		}
-		if (!ReadFile(hFile, source, large_size.LowPart, &sourceLen, NULL))
-			goto label_load_file;
-		CloseHandle(hFile);
-		hFile = INVALID_HANDLE_VALUE;
-
-		/* If loaded file ident is 'GTAG', then we have loaded a GAME.DAT */
-		if (reinterpret_cast<base::sChunkHeader*>(source)->ident == 'GTAG')
-		{
-			gResourceMem = source;
-			return true;
-		}
-
-		/* Otherwise, we decompress GAME.DTZ */
-		uLongf resourceSize = 0x650000;
-		if (!(gResourceMem = malloc(0x650000)))
-		{
-			ErrorBoxInputFileDecompression("Memory allocation failed.");
-			return false;
-		}
-		int result = uncompress(
-			reinterpret_cast<Bytef*>(gResourceMem), // Destination buffer
-			&resourceSize,                          // The size of the destination buffer; the size of decompressed data on return
-			reinterpret_cast<const Bytef*>(source), // Source buffer
-			sourceLen                               // Source buffer size
-		);
-		free(source);
-		source = nullptr;
-		switch (result)
-		{
+	/* Check the ident of the header */
+	if (header.ident == 'GTAG') {
+		/* GAME.DAT ident found, load input file as is */
+		if (header.fileEnd <= sizeof(header))
+			throw std::runtime_error("Input file is invalid");
+		mem.resize(header.fileEnd);
+		std::memcpy(mem.data(), &header, sizeof(header));
+		if (!iStream.read(reinterpret_cast<char*>(mem.data() + sizeof(header)), header.fileEnd - sizeof(header)))
+			throw std::runtime_error(iStream.gcount() == 0 ? "Cannot read from input file" : "Input file is invalid");
+	} else {
+		/* Ident is not recognised, set up a zlib stream for potentially compressed input */
+		z_stream z{};
+		switch (inflateInit(&z)) {
+		case Z_OK:
+			break;
 		case Z_MEM_ERROR:
-			ErrorBoxInputFileDecompression("Out of memory.");
-			return false;
-		case Z_BUF_ERROR:
-			ErrorBoxInputFileDecompression("File too large.");
-			return false;
-		case Z_DATA_ERROR:
-			ErrorBoxInputFileDecompression("Invalid data.");
-			return false;
+			throw std::bad_alloc();
+		default:
+			throw std::runtime_error("Cannot initialize zlib stream");
 		}
 
-		/* Get output GAME.DAT file name */
-		auto len = CFileSystem::GetInputFileNameNoExtensionLength();
-		wchar* outputname = new wchar[len + 5];
-		wcscpy(outputname, CFileSystem::GetInputFileNameNoExtension());
-		wcscpy(outputname + len, L".dat");
+		try {
+			/* Copy the header chunk we already have and read enough bytes to fill the temp buffer */
+			union {
+				std::byte buff[4096];
+				struct {
+					std::byte in[2048];
+					std::byte out[2048];
+				} temp;
+			};
+			std::memcpy(temp.in, &header, sizeof(header));
+			if (!iStream.read(reinterpret_cast<char*>(temp.in + sizeof(header)), sizeof(temp.in) - sizeof(header)))
+				throw std::runtime_error(iStream.gcount() == 0 ? "Cannot read input file" : "Input file is invalid");
 
-		auto ErrorBoxOutput = [&outputname](const char* str) {
-			ErrorBox(L"%ls\n%s", outputname, str);
-		};
+			/* Perform the first decompression step */
+			z.avail_in = sizeof(temp.in);
+			z.next_in = reinterpret_cast<Byte*>(temp.in);
+			z.avail_out = sizeof(temp.out);
+			z.next_out = reinterpret_cast<Byte*>(temp.out);
+			if (int ret = inflate(&z, Z_SYNC_FLUSH); ret == Z_MEM_ERROR)
+				throw std::bad_alloc();
+			else if (ret != Z_OK || z.total_out <= sizeof(header))
+				throw std::runtime_error(z.msg ? std::format("Zlib error: {}", z.msg) : "Input file is invalid");
 
-		/* Save GAME.DAT to disk */
-		hFile = CreateFileW(
-			outputname,                                        // Filename
-			GENERIC_WRITE,                                     // Desired acces
-			0,                                                 // Share mode
-			NULL,                                              // Security attributes
-			CREATE_ALWAYS,                                     // Creation disposition
-			FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, // Flags and attributes
-			NULL                                               // Template file
-		);
-		if (hFile == INVALID_HANDLE_VALUE)
-		{
-			ErrorBoxOutput("Cannot create file.");
-			delete[] outputname;
-			return false;
+			/* At this point we've produced enough bytes to read the header */
+			auto pHeader = reinterpret_cast<base::sChunkHeader*>(temp.out);
+			if (pHeader->ident != 'GTAG' || pHeader->fileEnd < z.total_out)
+				throw std::runtime_error("Input file is invalid");
+
+			/* For the output, allocate enough memory and copy over whatever decompressed data we have so far */
+			mem.resize(pHeader->fileEnd);
+			std::memcpy(mem.data(), temp.out, z.total_out);
+
+			/* For the input, copy any unprocessed bytes that may be left and read more to fill the buffer */
+			std::memcpy(buff, z.next_in, z.avail_in);
+			if (!iStream.read(reinterpret_cast<char*>(buff + z.avail_in), sizeof(buff) - z.avail_in) && iStream.gcount() == 0)
+				throw std::runtime_error("Cannot read input file");
+
+			/* Start the decompression loop */
+			z.avail_in += static_cast<uInt>(iStream.gcount());
+			z.next_in = reinterpret_cast<Byte*>(buff);
+			for (;;) {
+				z.avail_out = mem.size() - z.total_out;
+				z.next_out = reinterpret_cast<Byte*>(mem.data() + z.total_out);
+				if (int ret = inflate(&z, Z_NO_FLUSH); ret == Z_STREAM_END)
+					break;
+				else if (ret == Z_MEM_ERROR)
+					throw std::bad_alloc();
+				else if (ret != Z_OK || z.avail_out == 0)
+					throw std::runtime_error(z.msg ? std::format("Zlib error: {}", z.msg) : "Input file is invalid");
+				/* If all input bytes are consumed, attempt to read more */
+				if (z.avail_in == 0) {
+					if (!iStream.read(reinterpret_cast<char*>(buff), sizeof(buff)) && iStream.gcount() == 0)
+						throw std::runtime_error("Cannot read input file");
+					z.avail_in = static_cast<uInt>(iStream.gcount());
+					z.next_in = reinterpret_cast<Byte*>(buff);
+				}
+			}
+		} catch (...) {
+			/* If any exception occurs, cleanup the zlib stream before propagating the exception */
+			inflateEnd(&z);
+			throw;
 		}
-		result = WriteFile(hFile, gResourceMem, resourceSize, &sourceLen, NULL);
-		CloseHandle(hFile);
-		if (!result)
-		{
-			hFile = INVALID_HANDLE_VALUE;
-			ErrorBoxOutput("Cannot write to file.");
-			delete[] outputname;
-			return false;
-		}
-		delete[] outputname;
-		return true;
-	};
 
-	/* Run */
-	if (!_loadResourceImage())
-	{
-		if (hFile != INVALID_HANDLE_VALUE)
-			CloseHandle(hFile);
-		gResourceMem = source; // Whether source is a valid pointer or nullptr, it'll be freed automatically
-		return false;
+		/* Decompression is over, clean up the zlib stream */
+		inflateEnd(&z);
+
+		/* Also save GAME.DAT to disk */
+		std::ofstream f(iPath.replace_extension("dat").filename(), std::ios::binary);
+		if (!f.write(reinterpret_cast<const char*>(mem.data()), mem.size()))
+			throw std::runtime_error("Cannot write to output file");
 	}
 
-	/* Now that GAME.DTZ is fully loaded, create a ResourceImage reference */
-	sResourceImage* pResourceImage = reinterpret_cast<sResourceImage*>(base::cRelocatableChunk::Load(gResourceMem));
+	sResourceImage* pResourceImage = reinterpret_cast<sResourceImage*>(base::cRelocatableChunk::Load(mem.data()));
 
 	/* Initialize pools */
 	CPools::LoadPool(pResourceImage->buildingPool);
@@ -321,14 +272,4 @@ bool LoadResourceImage()
 #ifdef PSP
 	CSampleManager::LoadSamples(pResourceImage->soundSamples);
 #endif
-
-	/* A lambda that prints the file address of a pointer */
-	auto fileaddr = [](void* ptr)
-	{
-		return (uint32)ptr - (uint32)gResourceMem;
-	};
-
-	// std::cout << std::hex << fileaddr(pResourceImage->planeInst) << std::dec << std::endl;
-
-	return true;
 }
